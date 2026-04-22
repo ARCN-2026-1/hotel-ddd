@@ -368,8 +368,10 @@ def test_When_DockerfileIsRead_Expect_UvRuntimeUsesServiceSourceAndPersistentDat
     assert "FROM python:3.11-slim" in dockerfile
     assert "WORKDIR /app" in dockerfile
     assert "uv sync --frozen --no-dev --no-install-project" in dockerfile
-    assert "COPY . ." in dockerfile
+    assert "COPY internal/ ./internal/" in dockerfile
+    assert "COPY main.py ./" in dockerfile
     assert "mkdir -p data" in dockerfile
+    assert "USER app" in dockerfile
     assert (
         '.venv/bin/uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"'
         in dockerfile
