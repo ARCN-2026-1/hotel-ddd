@@ -191,7 +191,7 @@ def _log_auth_event(action: str, *, email: str) -> None:
 
 
 def _log_status_change(action: str, *, customer_id: str) -> None:
-    logger.info("Customer status %s customer_id=%s", action, customer_id)
+    logger.info("Customer status %s completed", action)
 
 
 def _configure_logging() -> None:
