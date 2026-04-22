@@ -4,14 +4,15 @@
 
 Análisis estático de código que corre automáticamente en:
 
-- cada PR hacia `develop`
 - cada push a `develop`
 - cada push a `main`
 
+Los Pull Requests siguen validando calidad en `.github/workflows/ci.yml`; SonarCloud queda reservado para pushes a ramas protegidas.
+
 ## Archivos involucrados
 
-- `sonar-project.properties` — configuración del proyecto (organización, fuentes, exclusiones, patrones de test)
-- `.github/workflows/sonar.yml` — workflow que dispara el análisis
+- `sonar-project.properties` — configuración del proyecto (organización, fuentes, exclusiones, patrones de test y coverage)
+- `.github/workflows/sonar.yml` — workflow que dispara el análisis y genera coverage real para `customer-service`
 
 ## Requisitos
 
@@ -25,11 +26,22 @@ El secret `SONAR_TOKEN` debe estar configurado en GitHub.
 
 ## Protección de ramas
 
-Después de que el workflow haya corrido al menos una vez, configurar en GitHub para `develop` y `main`:
+La estrategia actual separa validación de PR y análisis SonarCloud:
+
+- **PR hacia `develop`**: validar con `.github/workflows/ci.yml`
+- **Push a `develop` y `main`**: ejecutar SonarCloud
+
+### Recomendación para `develop`
 
 - Require a pull request before merging
 - Require status checks to pass before merging
-- Seleccionar el check de SonarCloud como obligatorio
+- Seleccionar `Customer Service Quality` como check obligatorio
+
+### Recomendación para `main`
+
+- Require a pull request before merging
+- Require status checks to pass before merging
+- Mantener `SonarCloud Scan` como check obligatorio si se quiere usar `main` como validación final de calidad integrada
 
 ## Coverage
 
@@ -41,3 +53,13 @@ El camino para activarla:
 2. Generar reportes de cobertura en CI
 3. Apuntar `sonar-project.properties` al reporte generado
 4. Exigir cobertura mínima en el Quality Gate
+
+Reporte actual configurado:
+
+- `services/customer-service/coverage.xml`
+
+## Flujo actual resumido
+
+- `ci.yml` corre en Pull Requests hacia `develop` con Ruff, Black, Pyright y pytest
+- `sonar.yml` corre solo en pushes a `develop` y `main`
+- Esto evita depender de branch analysis de SonarCloud en feature branches, que no está disponible en el plan actual
