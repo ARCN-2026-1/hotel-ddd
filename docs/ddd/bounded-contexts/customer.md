@@ -52,6 +52,7 @@ Gestiona el registro, validación y estado de los clientes del hotel. Otros cont
 - Un Customer con status Inactivo o Suspendido no puede generar comandos que modifiquen reservas.
 - El nombre y email son obligatorios; un Customer no puede existir sin ellos.
 - Solo se puede pasar a Inactivo desde Activo; un Customer Suspendido requiere resolución explícita.
+- Solo se puede pasar a Suspendido desde Activo.
 
 ## Políticas
 
