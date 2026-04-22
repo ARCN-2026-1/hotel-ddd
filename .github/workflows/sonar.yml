@@ -1,9 +1,6 @@
 name: SonarCloud
 
 on:
-  pull_request:
-    branches:
-      - develop
   push:
     branches:
       - develop
@@ -20,7 +17,78 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: SonarCloud scan
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Discover Python services
+        id: python-services
+        shell: bash
+        run: |
+          declare -a services=("customer-service" "inventory-service")
+          discovered_services=""
+
+          for service in "${services[@]}"; do
+            service_dir="services/$service"
+
+            if [ -f "$service_dir/pyproject.toml" ]; then
+              discovered_services+="$service_dir"$'\n'
+            fi
+          done
+
+          if [ -n "$discovered_services" ]; then
+            echo "has_services=true" >> "$GITHUB_OUTPUT"
+            echo 'services<<EOF' >> "$GITHUB_OUTPUT"
+            printf '%s' "$discovered_services" >> "$GITHUB_OUTPUT"
+            echo >> "$GITHUB_OUTPUT"
+            echo 'EOF' >> "$GITHUB_OUTPUT"
+          else
+            echo "has_services=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Generate Python coverage reports
+        if: steps.python-services.outputs.has_services == 'true'
+        shell: bash
+        run: |
+          while IFS= read -r service_dir; do
+            [ -z "$service_dir" ] && continue
+
+            pushd "$service_dir"
+            uv sync --dev
+            uv run pytest --cov=internal --cov-report=xml:coverage.xml --cov-report=term-missing
+            popd
+
+            coverage_file="$(basename "$service_dir")-coverage.xml"
+            cp "$service_dir/coverage.xml" "$coverage_file"
+          done <<< "${{ steps.python-services.outputs.services }}"
+
+      - name: Build Sonar arguments
+        id: sonar-args
+        shell: bash
+        run: |
+          if compgen -G '*-coverage.xml' > /dev/null; then
+            coverage_files=$(printf '%s\n' *-coverage.xml | paste -sd, -)
+            echo "has_coverage=true" >> "$GITHUB_OUTPUT"
+            echo "args=-Dsonar.python.coverage.reportPaths=$coverage_files" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_coverage=false" >> "$GITHUB_OUTPUT"
+            echo "args=" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: SonarCloud scan with coverage
+        if: steps.sonar-args.outputs.has_coverage == 'true'
+        uses: SonarSource/sonarqube-scan-action@v7
+        with:
+          args: ${{ steps.sonar-args.outputs.args }}
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+      - name: SonarCloud scan without coverage
+        if: steps.sonar-args.outputs.has_coverage != 'true'
         uses: SonarSource/sonarqube-scan-action@v7
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
