@@ -17,14 +17,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@v5
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
       - name: Discover Python services
         id: python-services
         shell: bash
@@ -49,6 +41,16 @@ jobs:
           else
             echo "has_services=false" >> "$GITHUB_OUTPUT"
           fi
+
+      - name: Install uv
+        if: steps.python-services.outputs.has_services == 'true'
+        uses: astral-sh/setup-uv@v5
+
+      - name: Set up Python
+        if: steps.python-services.outputs.has_services == 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
 
       - name: Generate Python coverage reports
         if: steps.python-services.outputs.has_services == 'true'
