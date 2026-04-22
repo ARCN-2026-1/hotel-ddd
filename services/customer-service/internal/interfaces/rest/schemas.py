@@ -1,5 +1,7 @@
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
+EXAMPLE_CUSTOMER_EMAIL = "jane@example.com"
+
 
 def _to_camel(string: str) -> str:
     parts = string.split("_")
@@ -17,7 +19,7 @@ class RegisterCustomerRequest(CamelCaseModel):
     )
     email: EmailStr = Field(
         description="Unique customer email address",
-        examples=["jane@example.com"],
+        examples=[EXAMPLE_CUSTOMER_EMAIL],
     )
     phone: str | None = Field(
         default=None,
@@ -34,7 +36,7 @@ class RegisterCustomerRequest(CamelCaseModel):
 class LoginRequest(CamelCaseModel):
     email: EmailStr = Field(
         description="Registered customer email address",
-        examples=["jane@example.com"],
+        examples=[EXAMPLE_CUSTOMER_EMAIL],
     )
     password: str = Field(
         description="Plain password for authentication",
@@ -77,7 +79,7 @@ class CustomerResponse(CamelCaseModel):
     name: str = Field(description="Customer full name", examples=["Jane Doe"])
     email: str = Field(
         description="Customer email address",
-        examples=["jane@example.com"],
+        examples=[EXAMPLE_CUSTOMER_EMAIL],
     )
     phone: str | None = Field(
         default=None,

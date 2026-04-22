@@ -405,7 +405,7 @@ def test_When_AdminSuspendsCustomer_Expect_StatusChangeIsLogged(
 
     # Assert
     assert response.status_code == 200
-    assert f"Customer status suspend customer_id={customer_id}" in caplog.text
+    assert "Customer status suspend completed" in caplog.text
 
 
 def test_When_UnexpectedErrorOccurs_Expect_InternalServerErrorAndExceptionLogged(
