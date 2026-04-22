@@ -1,0 +1,33 @@
+services:
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  customer-service:
+    build:
+      context: ./services/customer-service
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      CUSTOMER_SERVICE_DATABASE_URL: sqlite:///./data/customer-service.sqlite
+      CUSTOMER_SERVICE_EVENT_PUBLISHER_BACKEND: rabbitmq
+      CUSTOMER_SERVICE_RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/%2F
+      CUSTOMER_SERVICE_RABBITMQ_EXCHANGE: customer.events
+      CUSTOMER_SERVICE_JWT_SECRET: change-me-docker-dev-secret
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./services/customer-service/data:/app/data
+
+volumes:
+  rabbitmq-data:
